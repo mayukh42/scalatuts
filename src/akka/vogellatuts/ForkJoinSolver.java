@@ -15,22 +15,28 @@ public class ForkJoinSolver extends RecursiveAction {
 
     private int[] list;
     public long result;
+    private from, to;
 
     public ForkJoinSolver(int[] list) {
         this.list = list;
     }
 
+    private ForkJoinSolver(int[] list, int from, int to) {
+        this.list = list;
+        this.from = from;
+        this.to = to;
+    }
+
     @Override
     protected void compute() {
         // Summing the list by recursively breaking them into two halves - CUDA prefix sum approach
-        if (list.length == 1)
-            result = list[0];
+        if (to - from == 1)
+            result = list[to - from];
         else {
             int midpoint = list.length / 2;
-            int[] lower = Arrays.copyOfRange(list, 0, midpoint);
-            int[] upper = Arrays.copyOfRange(list, midpoint, list.length);
-            ForkJoinSolver fjs1 = new ForkJoinSolver(lower); // recursively create child objects of my type and call invokeAll() with them
-            ForkJoinSolver fjs2 = new ForkJoinSolver(upper);
+            
+            ForkJoinSolver fjs1 = new ForkJoinSolver(list, from, midpoint); // recursively create child objects of my type and call invokeAll() with them
+            ForkJoinSolver fjs2 = new ForkJoinSolver(list, from + midpoint, to);
             invokeAll(fjs1, fjs2); // implements the fork/join paradigm
             result = fjs1.result + fjs2.result; // joins results at my level
         }
